@@ -453,6 +453,24 @@ void PostAlignDecision(const seqAnResult& maxExtScore,
 	{
 		if(!b_pars.outputPaf)		// BELLA output format
 		{
+			if(begpH > begpV)
+			{
+				if(endpH-read1len < endpV-read2len)
+				{
+					// #E/#E - suffix = b >-->
+					if(maxExtScore.strand == "n")
+					{
+						int suffix = endpV-read2len;
+						std::string id1 = read1.nametag + "B";
+						std::string id2 = read2.nametag + "E";
+						myBatch << id1 << '\t' << id2 << '\t' << suffix << std::endl; 
+					}
+				}
+			}
+			// #B/#B - suffix = a <--<
+			// #E/#B - suffix = b <-->
+			// #B/#E - suffix = a >--<
+
 			myBatch << read2.nametag << '\t' << read1.nametag << '\t' << count << '\t' << maxExtScore.score << '\t' << ov << '\t' << maxExtScore.strand << '\t' << 
 				begpV << '\t' << endpV << '\t' << read2len << '\t' << begpH << '\t' << endpH << '\t' << read1len << endl;
 		}

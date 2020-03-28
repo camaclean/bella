@@ -52,9 +52,9 @@ overlapop(const std::string& read1, const std::string& read2, unsigned short int
 	int read2len = read2.length();
 
 	// GG: checking strand
-	bool oriented = checkstrand(read1, read2, begpH, begpV, kmerSize);
-
-	if(!oriented)
+	// bool oriented = checkstrand(read1, read2, begpH, begpV, kmerSize);
+	
+	if(begpH.second != begpV.second)
 	{
 		begpH = read1.length() - begpH - kmerSize;
 	}
@@ -73,15 +73,15 @@ overlapop(const std::string& read1, const std::string& read2, unsigned short int
 //	GG: multiply operation
 void
 multiop(spmatPtr_& value, const std::string& read1, const std::string& read2, 
-	unsigned short int begpH, unsigned short int begpV, const int kmerSize) {
+	PairType begpH, PairType begpV, const int kmerSize) {
 
 	value->count = 1;
-	vector<pair<unsigned short int, unsigned short int>> vec{std::make_pair(begpH, begpV)};	// GG: to facilitate bin division
+	vector<pair<PairType, PairType>> vec{std::make_pair(begpH, begpV)};	// GG: to facilitate bin division
 	value->pos.push_back(vec);
 	value->support.push_back(1);	// initial k-mer has support 1
 
 	// GG: check strand and compute overlap length
-	int overlap = overlapop(read1, read2, begpH, begpV, kmerSize);
+	int overlap = overlapop(read1, read2, begpH.first, begpV.first, kmerSize);
 	value->overlap.push_back(overlap);
 }
 
@@ -98,13 +98,12 @@ bool operator>(const std::pair<T,U>& l, const T& c) {
 
 //	GG: binning operation
 void
-chainop(spmatPtr_& m1, spmatPtr_& m2, BELLApars& b_pars, 
-	const std::string& readname1, const std::string& readname2)
+chainop(spmatPtr_& m1, spmatPtr_& m2, BELLApars& b_pars)
 {
 	// number of common k-mer
 	m1->count = m1->count + m2->count;
-	vector<unsigned short int> tobeinserted;
-	vector<vector<pair<unsigned short int, unsigned short int>>> kmertobeinserted(m1->pos.size());
+	vector<PairType> tobeinserted;
+	vector<vector<pair<PairType, PairType>>> kmertobeinserted(m1->pos.size());
 
 	for(int i = 0; i < m2->pos.size(); ++i)	
 	{
@@ -118,7 +117,7 @@ chainop(spmatPtr_& m1, spmatPtr_& m2, BELLApars& b_pars,
 					for(auto kmer2:m2->pos[i])
 					{
 						//	GG: kmer need to be not overlapping and at least <kmerRift> distant from each other (kmerRift = kmerSize deafult)
-						if(distance(kmer1, kmer2) > b_pars.kmerSize)
+						if(distance(kmer1.first, kmer2.first) > b_pars.kmerSize && kmer1.second == kmer2.second)
 						{
 							kmertobeinserted[j].push_back(kmer2);
 						}

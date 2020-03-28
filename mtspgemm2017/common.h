@@ -42,6 +42,9 @@ extern "C" {
 	#define printLog(var)
 #endif
 
+typedef std::pair<unsigned short int, bool> PairType;
+typedef std::vector<std::tuple<unsigned int, unsigned int, PairType>> TupleType;
+
 // modified from https://www.geeksforgeeks.org/interval-tree/
 struct Interval 
 { 
@@ -102,9 +105,9 @@ struct seqAnResult {
 };
 
 struct readType_ {
-	std::string nametag;
 	std::string seq; 
 	int readid;
+	bool rc = false; 	// all reads aren't rc by default, we determine this during spgemm and binning operation
 
 	bool operator < (readType_ & str)
 	{
@@ -125,7 +128,7 @@ struct SortBy:std::binary_function<unsigned short int, unsigned short int, bool>
 struct spmatType_ {
 
 	unsigned short int count = 0;		// number of shared k-mers
-	std::vector<std::vector<pair<unsigned short int, unsigned short int>>> pos;	// std::vector of k-mer positions <read-i, read-j> (if !K, use at most 2 kmers, otherwise all) per bin
+	std::vector<std::vector<pair<PairType, PairType>>> pos;	// std::vector of k-mer positions <read-i, read-j> (if !K, use at most 2 kmers, otherwise all) per bin
 	std::vector<unsigned short int> support;	// number of k-mers supporting a given overlap
 	std::vector<unsigned short int> overlap;	// overlap values
 	std::vector<unsigned short int> ids;		// indices corresponded to sorting of support

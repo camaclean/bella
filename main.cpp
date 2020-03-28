@@ -277,7 +277,7 @@ int main (int argc, char *argv[]) {
 	readVector_ reads;
 	Kmers kmersfromreads;
 	// vector<tuple<unsigned int, unsigned int, unsigned short int>> occurrences;	// 32 bit, 32 bit, 16 bit (read, kmer, position)
-    	vector<tuple<unsigned int, unsigned int, unsigned short int>> transtuples;	// 32 bit, 32 bit, 16 bit (kmer, read, position)
+    TupleType transtuples;	// 32 bit, 32 bit, 16 bit (kmer, read, <position, rc>)
     
 	// ================== //
 	// Parameters Summary //
@@ -383,7 +383,7 @@ int main (int argc, char *argv[]) {
 	double parsefastq = omp_get_wtime();
 
 	// vector<vector<tuple<unsigned int, unsigned int, unsigned short int>>> alloccurrences(MAXTHREADS);
-	vector<vector<tuple<unsigned int, unsigned int, unsigned short int>>> alltranstuples(MAXTHREADS);
+	vector<TupleType> alltranstuples(MAXTHREADS);
 
 	unsigned int numReads = 0; // numReads needs to be global (not just per file)
 
@@ -405,11 +405,9 @@ int main (int argc, char *argv[]) {
 				int len = seqs[i].length();
 
 				readType_ temp;
-				nametags[i].erase(nametags[i].begin());	// removing "@"
-				temp.nametag = nametags[i];
-				temp.seq = seqs[i];    					// save reads for seeded alignment
-				temp.readid = numReads+i;
-				allreads[MYTHREAD].push_back(temp);
+
+				temp.seq 		= seqs[i];    				// save reads for seeded alignment
+				temp.readid 	= numReads+i;
 
 				for(int j = 0; j <= len - b_parameters.kmerSize; j++)  
 				{
@@ -417,15 +415,20 @@ int main (int argc, char *argv[]) {
 					Kmer mykmer(kmerstrfromfastq.c_str(), kmerstrfromfastq.length());
 					// remember to use only ::rep() when building kmerdict as well
 					Kmer lexsmall = mykmer.rep();
+					
+					bool rc = false;
+					if(lexsmall != mykmer)
+						rc = true;
 
 					unsigned int idx; // kmer_id
 					auto found = countsreliable.find(lexsmall,idx);
 					if(found)
 					{
 						//alloccurrences[MYTHREAD].emplace_back(std::make_tuple(numReads+i, idx, j)); // vector<tuple<numReads,kmer_id,kmerpos>>
-						alltranstuples[MYTHREAD].emplace_back(std::make_tuple(idx, numReads+i, j)); // transtuples.push_back(col_id,row_id,kmerpos)
+						alltranstuples[MYTHREAD].emplace_back(std::make_tuple(idx, numReads+i, std::make_pair(j, rc))); // transtuples.push_back(col_id,row_id,kmerpos)
 					}
 				}
+				allreads[MYTHREAD].push_back(temp);
 			} // for(int i=0; i<nreads; i++)
 			numReads += nreads;
 		} //while(fillstatus) 
@@ -474,23 +477,22 @@ int main (int argc, char *argv[]) {
 
 	unsigned int nkmer = countsreliable.size();
 	double matcreat = omp_get_wtime();
-	CSC<unsigned int, unsigned short int> transpmat(transtuples, nkmer, numReads, 
-							[] (unsigned short int& p1, unsigned short int& p2) 
+	CSC<unsigned int, PairType> transpmat(transtuples, nkmer, numReads, 
+							[] (const PairType& p1, const PairType& p2) 
 							{
 								return p1;
 							}, false);	// hashspgemm doesn't require sorted rowids within each column
 	// remove memory of transtuples
-	std::vector<tuple<unsigned int, unsigned int, unsigned short int>>().swap(transtuples);
+	TupleType().swap(transtuples);
 
 	std::string TransposeSparseMatrixCreationTime = std::to_string(omp_get_wtime() - matcreat) + " seconds";
 	printLog(TransposeSparseMatrixCreationTime);
 
 
 	double transbeg = omp_get_wtime();	
-	CSC<unsigned int, unsigned short int> spmat = transpmat.Transpose();
+	CSC<unsigned int, PairType> spmat = transpmat.Transpose();
 	std::string ReTransposeTime = std::to_string(omp_get_wtime() - transbeg) + " seconds";
 	printLog(ReTransposeTime);
-
 
 	// ==================================================== //
 	// Sparse Matrix Multiplication (aka Overlap Detection) //
@@ -515,12 +517,8 @@ int main (int argc, char *argv[]) {
 	    [&b_parameters, &reads] (spmatPtr_& m1, spmatPtr_& m2, const unsigned int& id1, 
 	        const unsigned int& id2)
 		{
-			// GG: after testing correctness, these variables can be removed
-			std::string& readname1 = reads[id1].nametag;
-			std::string& readname2 = reads[id2].nametag;
-
 			// GG: function in chain.h
-			chainop(m1, m2, b_parameters, readname1, readname2);
+			chainop(m1, m2, b_parameters);
 			return m1;
 		},
 	    reads, getvaluetype, OutputFile, b_parameters, ratiophi, root);
