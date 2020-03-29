@@ -91,9 +91,11 @@ template <typename T>
 
 struct xavierResult {
     int score;
-	int suffx;
-    std::string type; 
     SeedX seed;
+
+	// GGGG: encode contained read by default
+	int suffx = 0;
+    std::string type = "-"; 
 };
 
 #endif
