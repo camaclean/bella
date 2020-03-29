@@ -510,21 +510,21 @@ void PostAlignDecision(const seqAnResult& maxExtScore,
 						   maxExtScore.suffx << std::endl;			
 			}
 		}
-		else
-		{
-			std::string pafstrand;				// maxExtScore not modifiable
-			unsigned short int mapq = 255;		// mapping quality (0-255; 255 for missing)
+		// else
+		// {
+		// 	std::string pafstrand;				// maxExtScore not modifiable
+		// 	unsigned short int mapq = 255;		// mapping quality (0-255; 255 for missing)
 
-			if(maxExtScore.strand == "n") pafstrand = "+";
-			else pafstrand = "-";
+		// 	if(maxExtScore.strand == "n") pafstrand = "+";
+		// 	else pafstrand = "-";
 
-			if(pafstrand == "-")
-				toOriginalCoordinates(begpH, endpH, read1len);
+		// 	if(pafstrand == "-")
+		// 		toOriginalCoordinates(begpH, endpH, read1len);
 
-			// PAF format is the output format used by minimap/minimap2: https://github.com/lh3/miniasm/blob/master/PAF.md
-			myBatch << read2.nametag << '\t' << read2len << '\t' << begpV << '\t' << endpV << '\t' << pafstrand << '\t' << 
-				read1.nametag << '\t' << read1len << '\t' << begpH << '\t' << endpH << '\t' << maxExtScore.score << '\t' << ov << '\t' << mapq << endl;
-		}
+		// 	// PAF format is the output format used by minimap/minimap2: https://github.com/lh3/miniasm/blob/master/PAF.md
+		// 	myBatch << read2.nametag << '\t' << read2len << '\t' << begpV << '\t' << endpV << '\t' << pafstrand << '\t' << 
+		// 		read1.nametag << '\t' << read1len << '\t' << begpH << '\t' << endpH << '\t' << maxExtScore.score << '\t' << ov << '\t' << mapq << endl;
+		// }
 		++outputted;
 		numBasesAlignedTrue += (endpV-begpV);
 	}
@@ -630,16 +630,14 @@ auto RunPairWiseAlignments(IT start, IT end, IT offset, IT * colptrC, IT * rowid
 			}
 			else // if skipAlignment == false do alignment, else save just some info on the pair to file
 			{
-				pair<int, int> kmer = val->choose();
-				int i = kmer.first, j = kmer.second;
+				pair<PairType, PairType> kmer = val->choose();
+				PairType i = kmer.first, j = kmer.second;
 
 				int overlap = overlapop(reads[rid].seq, reads[cid].seq, i, j, b_pars.kmerSize);
-				vss[ithread] << reads[cid].nametag << '\t' << reads[rid].nametag << '\t' << val->count << '\t' <<
+
+				vss[ithread] << reads[cid].readid << '\t' << reads[rid].readid << '\t' << val->count << '\t' <<
 						overlap << '\t' << seq2len << '\t' << seq1len << endl;
 				++outputted;
-				// vss[ithread] << reads[cid].nametag << '\t' << reads[rid].nametag << '\t' << val->count << '\t' << 
-				// 		seq2len << '\t' << seq1len << std::endl;
-				// ++outputted;
 			}
 		} // all nonzeros in that column of A^T A
 	#pragma omp critical

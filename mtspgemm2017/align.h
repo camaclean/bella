@@ -206,13 +206,13 @@ xavierResult xavierAlign(const std::string& row, const std::string& col, int row
 			// GGGG: contained read encoded by default - if i don't modify here it's considered contained read
 			// GGGG: so i can avoid some else statement
 			if(getBeginPositionH(seed) > getBeginPositionV(seed) && 
-				getEndPositionH(seed)-row.length() < getBEndPositionV(seed)-col.length())
+				getEndPositionH(seed)-row.length() < getEndPositionV(seed)-col.length())
 			{
 				result.type  = "B";
-				result.suffx = getBEndPositionV(seed)-col.length();
+				result.suffx = getEndPositionV(seed)-col.length();
 			}
 			else if(getBeginPositionH(seed) < getBeginPositionV(seed) &&
-				getEndPositionH(seed)-row.length() > getBEndPositionV(seed)-col.length())
+				getEndPositionH(seed)-row.length() > getEndPositionV(seed)-col.length())
 			{
 				result.type  = "E";
 				result.suffx = getEndPositionH(seed)-row.length();
@@ -241,17 +241,18 @@ xavierResult xavierAlign(const std::string& row, const std::string& col, int row
 			// GGGG: contained read encoded by default - if i don't modify here it's considered contained read
 			// GGGG: so i can avoid some else statement
 			if(getBeginPositionH(seed) > getBeginPositionV(seed) && 
-				getEndPositionH(seed)-row.length() < getBEndPositionV(seed)-col.length())
+				getEndPositionH(seed)-row.length() < getEndPositionV(seed)-col.length())
 			{
 				result.type  = "A";
-				result.suffx = getBEndPositionV(seed)-col.length();
+				result.suffx = getEndPositionV(seed)-col.length();
 			}
 			else if(getBeginPositionH(seed) < getBeginPositionV(seed) &&
-				getEndPositionH(seed)-row.length() > getBEndPositionV(seed)-col.length())
+				getEndPositionH(seed)-row.length() > getEndPositionV(seed)-col.length())
 			{
 				result.type  = "D";
 				result.suffx = getEndPositionH(seed)-row.length();
 			}
+		}
 	}
 	else
 	{
@@ -269,13 +270,13 @@ xavierResult xavierAlign(const std::string& row, const std::string& col, int row
 			// GGGG: contained read encoded by default - if i don't modify here it's considered contained read
 			// GGGG: so i can avoid some else statement
 			if(getBeginPositionH(seed) > getBeginPositionV(seed) && 
-				getEndPositionH(seed)-row.length() < getBEndPositionV(seed)-col.length())
+				getEndPositionH(seed)-row.length() < getEndPositionV(seed)-col.length())
 			{
 				result.type  = "C";
-				result.suffx = getBEndPositionV(seed)-col.length();
+				result.suffx = getEndPositionV(seed)-col.length();
 			}
 			else if(getBeginPositionH(seed) < getBeginPositionV(seed) &&
-				getEndPositionH(seed)-row.length() > getBEndPositionV(seed)-col.length())
+				getEndPositionH(seed)-row.length() > getEndPositionV(seed)-col.length())
 			{
 				result.type  = "G";
 				result.suffx = getEndPositionH(seed)-row.length();
@@ -283,7 +284,7 @@ xavierResult xavierAlign(const std::string& row, const std::string& col, int row
 		}
 		//	* F: <--< | i.B --> j.B	| ~C
 		//	* H: <--< | j.B --> i.B	| ~G
-		if(read_i.second)
+		else
 		{
 			/* 1) align */
 			tmp = XavierXDrop(seed, XAVIER_EXTEND_BOTH, row, col, scoringScheme, xDrop);
@@ -295,13 +296,13 @@ xavierResult xavierAlign(const std::string& row, const std::string& col, int row
 			// GGGG: contained read encoded by default - if i don't modify here it's considered contained read
 			// GGGG: so i can avoid some else statement
 			if(getBeginPositionH(seed) > getBeginPositionV(seed) && 
-				getEndPositionH(seed)-row.length() < getBEndPositionV(seed)-col.length())
+				getEndPositionH(seed)-row.length() < getEndPositionV(seed)-col.length())
 			{
 				result.type  = "F";
-				result.suffx = getBEndPositionV(seed)-col.length();
+				result.suffx = getEndPositionV(seed)-col.length();
 			}
 			else if(getBeginPositionH(seed) < getBeginPositionV(seed) &&
-				getEndPositionH(seed)-row.length() > getBEndPositionV(seed)-col.length())
+				getEndPositionH(seed)-row.length() > getEndPositionV(seed)-col.length())
 			{
 				result.type  = "H";
 				result.suffx = getEndPositionH(seed)-row.length();

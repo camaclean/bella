@@ -502,7 +502,7 @@ int main (int argc, char *argv[]) {
 	HashSpGEMM(
 		spmat, transpmat, 
 		// n-th k-mer positions on read i and on read j
-	    [&b_parameters, &reads] (const unsigned short int& begpH, const unsigned short int& begpV, 
+	    [&b_parameters, &reads] (const PairType& begpH, const PairType& begpV, 
 	        const unsigned int& id1, const unsigned int& id2)
 		{
 			spmatPtr_ value(make_shared<spmatType_>());

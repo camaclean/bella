@@ -266,7 +266,7 @@ Interval *search(ITNode *root, int L)
 
 void updateAlign(xavierResult& result, SeedX& seed, int bestScore)
 {
-	result.score = tmp.first;
+	result.score = bestScore;
 
 	setBeginPositionH(result.seed, getBeginPositionH(seed));
 	setBeginPositionV(result.seed, getBeginPositionV(seed));
