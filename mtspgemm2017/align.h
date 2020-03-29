@@ -188,7 +188,7 @@ xavierResult xavierAlign(const std::string& row, const std::string& col, int row
 		if(read_i.second)
 		{
 			read_rc = row;
-			std::reverse(std::begin(read_rc), std::end(read_rc));
+			std::reverse  (std::begin(read_rc), std::end(read_rc));
 			std::transform(std::begin(read_rc), std::end(read_rc), std::begin(read_rc), complementbase);
 
 			setBeginPositionH(seed, rowLen - read_i.first - kmerSize);
@@ -196,22 +196,21 @@ xavierResult xavierAlign(const std::string& row, const std::string& col, int row
 
 			tmp = XavierXDrop(seed, XAVIER_EXTEND_BOTH, read_rc, col, scoringScheme, xDrop);
 
-
-			result.strand = "c";
+			result.type = "B|E";
 		}
 		//	* A: <---> | i.E ---> j.B | ~B
 		//	* D: >---< | j.B ---> i.E | ~E
 		else if(read_j.second)
 		{
 			read_rc = col;
-			std::reverse(std::begin(read_rc), std::end(read_rc));
+			std::reverse  (std::begin(read_rc), std::end(read_rc));
 			std::transform(std::begin(read_rc), std::end(read_rc), std::begin(read_rc), complementbase);
 
 			setBeginPositionH(seed, rowLen - read_j.first - kmerSize);
 			setEndPositionH  (seed, rowLen - read_j.first);
 
 			tmp = XavierXDrop(seed, XAVIER_EXTEND_BOTH, row, read_rc, scoringScheme, xDrop);
-			result.strand = "c";			
+			result.type = "A|D";			
 		}
 		// GGGG: DO NOT output contained read for combter for now
 		else
@@ -226,14 +225,14 @@ xavierResult xavierAlign(const std::string& row, const std::string& col, int row
 		if(!read_i.second)
 		{
 			tmp = XavierXDrop(seed, XAVIER_EXTEND_BOTH, row, col, scoringScheme, xDrop);
-			result.strand = "n";
+			result.type = "C|G";
 		}
 		//	* F: <--< | i.B --> j.B	| ~C
 		//	* H: <--< | j.B --> i.B	| ~G
 		if(read_i.second)
 		{
 			tmp = XavierXDrop(seed, XAVIER_EXTEND_BOTH, row, col, scoringScheme, xDrop);
-			result.strand = "n";
+			result.type = "F|H";
 		}
 		// GGGG: DO NOT output contained read for combter for now
 		else

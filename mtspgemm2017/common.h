@@ -91,7 +91,8 @@ template <typename T>
 
 struct xavierResult {
     int score;
-    std::string strand;
+	int suffx;
+    std::string type; 
     SeedX seed;
 };
 
