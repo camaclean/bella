@@ -167,7 +167,7 @@ struct spmatType_ {
 	}
 
 	//	GG: choose does also sorting and return the position of the first k-mer in each bin
-	pair<unsigned short int, unsigned short int> choose() {
+	pair<PairType, PairType> choose() {
 		ids = std::vector<unsigned short int>(support.size());	// number of support
 		std::iota(ids.begin(), ids.end(), 0);				// assign an id
 		std::sort(ids.begin(), ids.end(), SortBy(support));	// sort support by supporting k-mers
