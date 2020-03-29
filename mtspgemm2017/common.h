@@ -262,4 +262,15 @@ Interval *search(ITNode *root, int L)
 		return search(root->ri, L); 
 }
 
+void updateAlign(xavierResult& result, SeedX& seed, int bestScore)
+{
+	result.score = tmp.first;
+
+	setBeginPositionH(result.seed, getBeginPositionH(seed));
+	setBeginPositionV(result.seed, getBeginPositionV(seed));
+
+	setEndPositionH  (result.seed, getEndPositionH(seed));	
+	setEndPositionV  (result.seed, getEndPositionV(seed));	
+}
+
 #endif

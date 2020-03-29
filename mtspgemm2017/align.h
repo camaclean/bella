@@ -200,13 +200,7 @@ xavierResult xavierAlign(const std::string& row, const std::string& col, int row
 			tmp = XavierXDrop(seed, XAVIER_EXTEND_BOTH, read_rc, col, scoringScheme, xDrop);
 
 			/* 3) update best score and extension */
-			result.score = tmp.first;
-
-			setBeginPositionH(result.seed, getBeginPositionH(seed));
-			setBeginPositionV(result.seed, getBeginPositionV(seed));
-
-			setEndPositionH  (result.seed, getEndPositionH(seed));	
-			setEndPositionV  (result.seed, getEndPositionV(seed));	
+			updateAlign(result, seed, tmp.first);
 
 			/* 4) identify the type of overlap (B|E) */
 			if(getBeginPositionH(seed) > getBeginPositionV(seed))
@@ -259,13 +253,7 @@ xavierResult xavierAlign(const std::string& row, const std::string& col, int row
 			tmp = XavierXDrop(seed, XAVIER_EXTEND_BOTH, row, read_rc, scoringScheme, xDrop);
 
 			/* 3) update best score and extension */
-			result.score = tmp.first;
-
-			setBeginPositionH(result.seed, getBeginPositionH(seed));
-			setBeginPositionV(result.seed, getBeginPositionV(seed));
-
-			setEndPositionH  (result.seed, getEndPositionH(seed));	
-			setEndPositionV  (result.seed, getEndPositionV(seed));	
+			updateAlign(result, seed, tmp.first);	
 
 			/* 4) identify the type of overlap (A|D) */
 			if(getBeginPositionH(seed) > getBeginPositionV(seed))
@@ -311,13 +299,7 @@ xavierResult xavierAlign(const std::string& row, const std::string& col, int row
 			tmp = XavierXDrop(seed, XAVIER_EXTEND_BOTH, row, col, scoringScheme, xDrop);
 
 			/* 2) update best score and extension */
-			result.score = tmp.first;
-
-			setBeginPositionH(result.seed, getBeginPositionH(seed));
-			setBeginPositionV(result.seed, getBeginPositionV(seed));
-
-			setEndPositionH  (result.seed, getEndPositionH(seed));	
-			setEndPositionV  (result.seed, getEndPositionV(seed));	
+			updateAlign(result, seed, tmp.first);	
 
 			/* 3) identify the type of overlap (C|G) */
 			if(getBeginPositionH(seed) > getBeginPositionV(seed))
@@ -361,13 +343,7 @@ xavierResult xavierAlign(const std::string& row, const std::string& col, int row
 			tmp = XavierXDrop(seed, XAVIER_EXTEND_BOTH, row, col, scoringScheme, xDrop);
 
 			/* 2) update best score and extension */
-			result.score = tmp.first;
-
-			setBeginPositionH(result.seed, getBeginPositionH(seed));
-			setBeginPositionV(result.seed, getBeginPositionV(seed));
-
-			setEndPositionH  (result.seed, getEndPositionH(seed));	
-			setEndPositionV  (result.seed, getEndPositionV(seed));	
+			updateAlign(result, seed, tmp.first);
 
 			/* 3) identify the type of overlap (F|H) */
 			if(getBeginPositionH(seed) > getBeginPositionV(seed))
