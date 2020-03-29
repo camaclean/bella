@@ -187,35 +187,77 @@ xavierResult xavierAlign(const std::string& row, const std::string& col, int row
 		//	* E: <---> | i.B ---> j.E | ~D
 		if(read_i.second)
 		{
+			/* 1) reverse complement and update pos */
 			read_rc = row;
+
 			std::reverse  (std::begin(read_rc), std::end(read_rc));
 			std::transform(std::begin(read_rc), std::end(read_rc), std::begin(read_rc), complementbase);
 
 			setBeginPositionH(seed, rowLen - read_i.first - kmerSize);
 			setEndPositionH  (seed, rowLen - read_i.first);
 
+			/* 2) align */
 			tmp = XavierXDrop(seed, XAVIER_EXTEND_BOTH, read_rc, col, scoringScheme, xDrop);
 
-			result.type = "B|E";
+			/* 3) identify the type of overlap (B|E) */
+			if(getBeginPositionH(seed) > getBeginPositionV(seed))
+			{
+				if(getEndPositionH(seed)-row.length() < getBEndPositionV(seed)-col.length())
+					result.type = "B";
+				else
+					result.type = "-"; // GGGG: contained
+
+			}
+			else if(getBeginPositionH(seed) < getBeginPositionV(seed))
+			{
+				if(getEndPositionH(seed)-row.length() > getBEndPositionV(seed)-col.length())
+					result.type = "E";
+				else
+					result.type = "-"; // GGGG: contained
+
+			}
+			else
+			{
+				result.type = "-"; // GGGG: contained
+			}
 		}
 		//	* A: <---> | i.E ---> j.B | ~B
 		//	* D: >---< | j.B ---> i.E | ~E
-		else if(read_j.second)
+		else
 		{
+			/* 1) reverse complement and update pos */
 			read_rc = col;
+			
 			std::reverse  (std::begin(read_rc), std::end(read_rc));
 			std::transform(std::begin(read_rc), std::end(read_rc), std::begin(read_rc), complementbase);
 
-			setBeginPositionH(seed, rowLen - read_j.first - kmerSize);
-			setEndPositionH  (seed, rowLen - read_j.first);
+			setBeginPositionV(seed, rowLen - read_j.first - kmerSize);
+			setEndPositionV  (seed, rowLen - read_j.first);
 
+			/* 2) align */
 			tmp = XavierXDrop(seed, XAVIER_EXTEND_BOTH, row, read_rc, scoringScheme, xDrop);
-			result.type = "A|D";			
-		}
-		// GGGG: DO NOT output contained read for combter for now
-		else
-		{
-			std::cout << "err" << std::endl;
+
+			/* 3) identify the type of overlap (B|E) */
+			if(getBeginPositionH(seed) > getBeginPositionV(seed))
+			{
+				if(getEndPositionH(seed)-row.length() < getBEndPositionV(seed)-col.length())
+					result.type = "A";
+				else
+					result.type = "-"; // GGGG: contained
+
+			}
+			else if(getBeginPositionH(seed) < getBeginPositionV(seed))
+			{
+				if(getEndPositionH(seed)-row.length() > getBEndPositionV(seed)-col.length())
+					result.type = "D";
+				else
+					result.type = "-"; // GGGG: contained
+
+			}
+			else
+			{
+				result.type = "-"; // GGGG: contained
+			}			
 		}	
 	}
 	else
@@ -224,20 +266,59 @@ xavierResult xavierAlign(const std::string& row, const std::string& col, int row
 		//	* G: >--> | i.E --> j.E | ~H
 		if(!read_i.second)
 		{
+			/* 1) align */
 			tmp = XavierXDrop(seed, XAVIER_EXTEND_BOTH, row, col, scoringScheme, xDrop);
-			result.type = "C|G";
+
+			/* 2) identify the type of overlap (B|E) */
+			if(getBeginPositionH(seed) > getBeginPositionV(seed))
+			{
+				if(getEndPositionH(seed)-row.length() < getBEndPositionV(seed)-col.length())
+					result.type = "C";
+				else
+					result.type = "-"; // GGGG: contained
+
+			}
+			else if(getBeginPositionH(seed) < getBeginPositionV(seed))
+			{
+				if(getEndPositionH(seed)-row.length() > getBEndPositionV(seed)-col.length())
+					result.type = "G";
+				else
+					result.type = "-"; // GGGG: contained
+
+			}
+			else
+			{
+				result.type = "-"; // GGGG: contained
+			}
 		}
 		//	* F: <--< | i.B --> j.B	| ~C
 		//	* H: <--< | j.B --> i.B	| ~G
 		if(read_i.second)
 		{
+			/* 1) align */
 			tmp = XavierXDrop(seed, XAVIER_EXTEND_BOTH, row, col, scoringScheme, xDrop);
-			result.type = "F|H";
-		}
-		// GGGG: DO NOT output contained read for combter for now
-		else
-		{
-			std::cout << "err" << std::endl;
+
+			/* 2) identify the type of overlap (B|E) */
+			if(getBeginPositionH(seed) > getBeginPositionV(seed))
+			{
+				if(getEndPositionH(seed)-row.length() < getBEndPositionV(seed)-col.length())
+					result.type = "F";
+				else
+					result.type = "-"; // GGGG: contained
+
+			}
+			else if(getBeginPositionH(seed) < getBeginPositionV(seed))
+			{
+				if(getEndPositionH(seed)-row.length() > getBEndPositionV(seed)-col.length())
+					result.type = "H";
+				else
+					result.type = "-"; // GGGG: contained
+
+			}
+			else
+			{
+				result.type = "-"; // GGGG: contained
+			}
 		}
 	}
 
