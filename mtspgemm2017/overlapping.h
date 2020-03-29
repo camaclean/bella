@@ -579,7 +579,6 @@ auto RunPairWiseAlignments(IT start, IT end, IT offset, IT * colptrC, IT * rowid
 
 				int i = kmer.first.first, j = kmer.second.first;
 				bool rc1 = kmer.first.second, rc2 = kmer.second.second;
-				// GGGG: checkpoint
 
 				//	GG: nucleotide alignment
 			#ifdef __SIMD__
