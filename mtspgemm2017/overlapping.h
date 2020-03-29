@@ -409,19 +409,19 @@ void PostAlignDecision(const seqAnResult& maxExtScore,
 	// these four return seqan:Tposition objects
 #ifdef __SIMD__
 	int begpV = getBeginPositionV(maxseed);
-	int endpV = getEndPositionV(maxseed);
+	int endpV = getEndPositionV  (maxseed);
 	int begpH = getBeginPositionH(maxseed);
-	int endpH = getEndPositionH(maxseed);
+	int endpH = getEndPositionH  (maxseed);
 #else
 	int begpV = beginPositionV(maxseed);
-	int endpV = endPositionV(maxseed);
+	int endpV = endPositionV  (maxseed);
 	int begpH = beginPositionH(maxseed);
-	int endpH = endPositionH(maxseed);
+	int endpH = endPositionH  (maxseed);
 #endif
 
 	// Get references for better naming
 	const string& seq1 = read1.seq;	// H
-	const string& seq2 = read2.seq;	// Vzw
+	const string& seq2 = read2.seq;	// V
 
 	unsigned short int read1len = seq1.length();
 	unsigned short int read2len = seq2.length();
@@ -451,33 +451,69 @@ void PostAlignDecision(const seqAnResult& maxExtScore,
 
 	if(passed)
 	{
-		if(!b_pars.outputPaf)		// BELLA output format
+		if(!b_pars.outputPaf) 
 		{
-			if(begpH > begpV)
+			//	* B: >---< | j.E ---> i.B | ~A
+			if(maxExtScore.type == "B")
 			{
-				if(endpH-read1len < endpV-read2len)
-				{
-					// #E/#E - suffix = b >-->
-					if(maxExtScore.strand == "n")
-					{
-						int suffix = endpV-read2len;
-						std::string id1 = read1.nametag + "B";
-						std::string id2 = read2.nametag + "E";
-						myBatch << id1 << '\t' << id2 << '\t' << suffix << std::endl; 
-					}
-				}
+				myBatch << std::to_string(read2.readid) + "E	" << 
+						   std::to_string(read1.readid) + "B	" << 
+						   maxExtScore.suffx << std::endl;
 			}
-			// #B/#B - suffix = a <--<
-			// #E/#B - suffix = b <-->
-			// #B/#E - suffix = a >--<
-
-			myBatch << read2.nametag << '\t' << read1.nametag << '\t' << count << '\t' << maxExtScore.score << '\t' << ov << '\t' << maxExtScore.strand << '\t' << 
-				begpV << '\t' << endpV << '\t' << read2len << '\t' << begpH << '\t' << endpH << '\t' << read1len << endl;
+			//	* E: <---> | i.B ---> j.E | ~D
+			else if(maxExtScore.type == "B")
+			{
+				myBatch << std::to_string(read1.readid) + "B	" << 
+						   std::to_string(read2.readid) + "E	" << 
+						   maxExtScore.suffx << std::endl;				
+			}
+			//	* A: <---> | i.E ---> j.B | ~B
+			else if(maxExtScore.type == "A")
+			{
+				myBatch << std::to_string(read1.readid) + "E	" << 
+						   std::to_string(read2.readid) + "B	" << 
+						   maxExtScore.suffx << std::endl;				
+			}
+			//	* D: >---< | j.B ---> i.E | ~E
+			else if(maxExtScore.type == "D")
+			{
+				myBatch << std::to_string(read2.readid) + "B	" << 
+						   std::to_string(read1.readid) + "E	" << 
+						   maxExtScore.suffx << std::endl;				
+			}
+			//	* C: >--> | j.E --> i.E | ~F
+			else if(maxExtScore.type == "C")
+			{
+				myBatch << std::to_string(read2.readid) + "E	" << 
+						   std::to_string(read1.readid) + "E	" << 
+						   maxExtScore.suffx << std::endl;				
+			}
+			//	* G: >--> | i.E --> j.E | ~H
+			else if(maxExtScore.type == "G")
+			{
+				myBatch << std::to_string(read1.readid) + "E	" << 
+						   std::to_string(read2.readid) + "E	" << 
+						   maxExtScore.suffx << std::endl;				
+			}
+			//	* F: <--< | i.B --> j.B	| ~C
+			else if(maxExtScore.type == "F")
+			{
+				myBatch << std::to_string(read1.readid) + "B	" << 
+						   std::to_string(read2.readid) + "B	" << 
+						   maxExtScore.suffx << std::endl;				
+			}
+			//	* H: <--< | j.B --> i.B	| ~G
+			else if(maxExtScore.type == "H")
+			{
+				myBatch << std::to_string(read2.readid) + "B	" << 
+						   std::to_string(read1.readid) + "B	" << 
+						   maxExtScore.suffx << std::endl;			
+			}
 		}
 		else
 		{
-			std::string pafstrand;	// maxExtScore not modifiable
-			unsigned short int mapq = 255;			// mapping quality (0-255; 255 for missing)
+			std::string pafstrand;				// maxExtScore not modifiable
+			unsigned short int mapq = 255;		// mapping quality (0-255; 255 for missing)
 
 			if(maxExtScore.strand == "n") pafstrand = "+";
 			else pafstrand = "-";
@@ -577,12 +613,9 @@ auto RunPairWiseAlignments(IT start, IT end, IT offset, IT * colptrC, IT * rowid
 
 				pair<PairType, PairType> kmer = val->choose();
 
-				int i = kmer.first.first, j = kmer.second.first;
-				bool rc1 = kmer.first.second, rc2 = kmer.second.second;
-
 				//	GG: nucleotide alignment
 			#ifdef __SIMD__
-				maxExtScore = xavierAlign(seq1, seq2, seq1len, i, j, b_pars.xDrop, b_pars.kmerSize);
+				maxExtScore = xavierAlign(seq1, seq2, seq1len, kmer.first, kmer.second, b_pars.xDrop, b_pars.kmerSize);
 			#else
 				maxExtScore = alignSeqAn(seq1, seq2, seq1len, i, j, b_pars.xDrop, b_pars.kmerSize);
 			#endif
