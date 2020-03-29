@@ -199,26 +199,47 @@ xavierResult xavierAlign(const std::string& row, const std::string& col, int row
 			/* 2) align */
 			tmp = XavierXDrop(seed, XAVIER_EXTEND_BOTH, read_rc, col, scoringScheme, xDrop);
 
-			/* 3) identify the type of overlap (B|E) */
+			/* 3) update best score and extension */
+			result.score = tmp.first;
+
+			setBeginPositionH(result.seed, getBeginPositionH(seed));
+			setBeginPositionV(result.seed, getBeginPositionV(seed));
+
+			setEndPositionH  (result.seed, getEndPositionH(seed));	
+			setEndPositionV  (result.seed, getEndPositionV(seed));	
+
+			/* 4) identify the type of overlap (B|E) */
 			if(getBeginPositionH(seed) > getBeginPositionV(seed))
 			{
 				if(getEndPositionH(seed)-row.length() < getBEndPositionV(seed)-col.length())
-					result.type = "B";
+				{
+					result.type  = "B";
+					result.suffx = getBEndPositionV(seed)-col.length();
+				}
 				else
-					result.type = "-"; // GGGG: contained
+				{
+					result.type  = "-"; // GGGG: contained
+					result.suffx = 0;
+				}
 
 			}
 			else if(getBeginPositionH(seed) < getBeginPositionV(seed))
 			{
 				if(getEndPositionH(seed)-row.length() > getBEndPositionV(seed)-col.length())
-					result.type = "E";
+				{
+					result.type  = "E";
+					result.suffx = getEndPositionH(seed)-row.length();
+				}
 				else
-					result.type = "-"; // GGGG: contained
-
+				{
+					result.type  = "-"; // GGGG: contained
+					result.suffx = 0;
+				}
 			}
 			else
 			{
-				result.type = "-"; // GGGG: contained
+				result.type  = "-"; // GGGG: contained
+				result.suffx = 0;
 			}
 		}
 		//	* A: <---> | i.E ---> j.B | ~B
@@ -237,28 +258,48 @@ xavierResult xavierAlign(const std::string& row, const std::string& col, int row
 			/* 2) align */
 			tmp = XavierXDrop(seed, XAVIER_EXTEND_BOTH, row, read_rc, scoringScheme, xDrop);
 
-			/* 3) identify the type of overlap (B|E) */
+			/* 3) update best score and extension */
+			result.score = tmp.first;
+
+			setBeginPositionH(result.seed, getBeginPositionH(seed));
+			setBeginPositionV(result.seed, getBeginPositionV(seed));
+
+			setEndPositionH  (result.seed, getEndPositionH(seed));	
+			setEndPositionV  (result.seed, getEndPositionV(seed));	
+
+			/* 4) identify the type of overlap (A|D) */
 			if(getBeginPositionH(seed) > getBeginPositionV(seed))
 			{
 				if(getEndPositionH(seed)-row.length() < getBEndPositionV(seed)-col.length())
-					result.type = "A";
+				{
+					result.type  = "A";
+					result.suffx = getBEndPositionV(seed)-col.length();
+				}
 				else
-					result.type = "-"; // GGGG: contained
+				{
+					result.type  = "-"; // GGGG: contained
+					result.suffx = 0;
+				}
 
 			}
 			else if(getBeginPositionH(seed) < getBeginPositionV(seed))
 			{
 				if(getEndPositionH(seed)-row.length() > getBEndPositionV(seed)-col.length())
-					result.type = "D";
+				{
+					result.type  = "D";
+					result.suffx = getEndPositionH(seed)-row.length();
+				}
 				else
-					result.type = "-"; // GGGG: contained
-
+				{
+					result.type  = "-"; // GGGG: contained
+					result.suffx = 0;
+				}
 			}
 			else
 			{
-				result.type = "-"; // GGGG: contained
-			}			
-		}	
+				result.type  = "-"; // GGGG: contained
+				result.suffx = 0;
+			}	
 	}
 	else
 	{
@@ -269,26 +310,47 @@ xavierResult xavierAlign(const std::string& row, const std::string& col, int row
 			/* 1) align */
 			tmp = XavierXDrop(seed, XAVIER_EXTEND_BOTH, row, col, scoringScheme, xDrop);
 
-			/* 2) identify the type of overlap (B|E) */
+			/* 2) update best score and extension */
+			result.score = tmp.first;
+
+			setBeginPositionH(result.seed, getBeginPositionH(seed));
+			setBeginPositionV(result.seed, getBeginPositionV(seed));
+
+			setEndPositionH  (result.seed, getEndPositionH(seed));	
+			setEndPositionV  (result.seed, getEndPositionV(seed));	
+
+			/* 3) identify the type of overlap (C|G) */
 			if(getBeginPositionH(seed) > getBeginPositionV(seed))
 			{
 				if(getEndPositionH(seed)-row.length() < getBEndPositionV(seed)-col.length())
-					result.type = "C";
+				{
+					result.type  = "C";
+					result.suffx = getBEndPositionV(seed)-col.length();
+				}
 				else
-					result.type = "-"; // GGGG: contained
+				{
+					result.type  = "-"; // GGGG: contained
+					result.suffx = 0;
+				}
 
 			}
 			else if(getBeginPositionH(seed) < getBeginPositionV(seed))
 			{
 				if(getEndPositionH(seed)-row.length() > getBEndPositionV(seed)-col.length())
-					result.type = "G";
+				{
+					result.type  = "G";
+					result.suffx = getEndPositionH(seed)-row.length();
+				}
 				else
-					result.type = "-"; // GGGG: contained
-
+				{
+					result.type  = "-"; // GGGG: contained
+					result.suffx = 0;
+				}
 			}
 			else
 			{
-				result.type = "-"; // GGGG: contained
+				result.type  = "-"; // GGGG: contained
+				result.suffx = 0;
 			}
 		}
 		//	* F: <--< | i.B --> j.B	| ~C
@@ -298,37 +360,50 @@ xavierResult xavierAlign(const std::string& row, const std::string& col, int row
 			/* 1) align */
 			tmp = XavierXDrop(seed, XAVIER_EXTEND_BOTH, row, col, scoringScheme, xDrop);
 
-			/* 2) identify the type of overlap (B|E) */
+			/* 2) update best score and extension */
+			result.score = tmp.first;
+
+			setBeginPositionH(result.seed, getBeginPositionH(seed));
+			setBeginPositionV(result.seed, getBeginPositionV(seed));
+
+			setEndPositionH  (result.seed, getEndPositionH(seed));	
+			setEndPositionV  (result.seed, getEndPositionV(seed));	
+
+			/* 3) identify the type of overlap (F|H) */
 			if(getBeginPositionH(seed) > getBeginPositionV(seed))
 			{
 				if(getEndPositionH(seed)-row.length() < getBEndPositionV(seed)-col.length())
-					result.type = "F";
+				{
+					result.type  = "F";
+					result.suffx = getBEndPositionV(seed)-col.length();
+				}
 				else
-					result.type = "-"; // GGGG: contained
+				{
+					result.type  = "-"; // GGGG: contained
+					result.suffx = 0;
+				}
 
 			}
 			else if(getBeginPositionH(seed) < getBeginPositionV(seed))
 			{
 				if(getEndPositionH(seed)-row.length() > getBEndPositionV(seed)-col.length())
-					result.type = "H";
+				{
+					result.type  = "H";
+					result.suffx = getEndPositionH(seed)-row.length();
+				}
 				else
-					result.type = "-"; // GGGG: contained
-
+				{
+					result.type  = "-"; // GGGG: contained
+					result.suffx = 0;
+				}
 			}
 			else
 			{
-				result.type = "-"; // GGGG: contained
+				result.type  = "-"; // GGGG: contained
+				result.suffx = 0;
 			}
 		}
 	}
-
-	result.score = tmp.first; 	// best score
-
-	setBeginPositionH(result.seed, getBeginPositionH(seed));	// updated extension
-	setBeginPositionV(result.seed, getBeginPositionV(seed));	// updated extension
-
-	setEndPositionH(result.seed, getEndPositionH(seed));		// updated extension
-	setEndPositionV(result.seed, getEndPositionV(seed));		// updated extension
 
 	return result;
 }
