@@ -132,26 +132,12 @@ seqAnResult alignSeqAn(const std::string & row, const std::string & col, PairTyp
 			setBeginPositionH(seed, i);
 			setEndPositionH  (seed, i + kmerSize);
 
-			if(beginPositionH(seed) > rlen)
-			{
-				printLog(read_i.first);
-				printLog(beginPositionH(seed));
-				printLog(rlen);
-			}
-
 			/* 2) align */
 			tmp = extendSeed(seed, twinRead, seqV, EXTEND_BOTH, scoringScheme, xDrop, kmerSize, GappedXDrop());
 
 			/* 3) update best score and extension */
 			updateSeqAn(result, seed, tmp);
 	
-			if(endPositionH(seed) > rlen)
-			{
-				printLog(beginPositionH(seed));
-				printLog(endPositionH(seed));
-				printLog(rlen);
-			}
-
 			/* 4) identify the type of overlap (B|E) */
 			// GGGG: contained read encoded by default - if i don't modify here it's considered contained read
 			// GGGG: so i can avoid some else statement
@@ -192,13 +178,6 @@ seqAnResult alignSeqAn(const std::string & row, const std::string & col, PairTyp
 			/* 3) update best score and extension */
 			updateSeqAn(result, seed, tmp);
 
-			if(endPositionH(seed) > rlen)
-			{
-				printLog(beginPositionH(seed));
-				printLog(endPositionH(seed));
-				printLog(rlen);
-			}
-
 			/* 4) identify the type of overlap (A|D) */
 			// GGGG: contained read encoded by default - if i don't modify here it's considered contained read
 			// GGGG: so i can avoid some else statement
@@ -235,13 +214,6 @@ seqAnResult alignSeqAn(const std::string & row, const std::string & col, PairTyp
 
 			/* 3) update best score and extension */
 			updateSeqAn(result, seed, tmp);
-
-			if(endPositionH(seed) > rlen)
-			{
-				printLog(beginPositionH(seed));
-				printLog(endPositionH(seed));
-				printLog(rlen);
-			}
 
 			/* 3) identify the type of overlap (C|G) */
 			// GGGG: contained read encoded by default - if i don't modify here it's considered contained read
@@ -301,20 +273,6 @@ seqAnResult alignSeqAn(const std::string & row, const std::string & col, PairTyp
 			}
 		}
 	}
-
-	// if(endPositionH(seed) > rlen)
-	// {
-	// 	printLog(beginPositionH(seed));
-	// 	printLog(endPositionH(seed));
-	// 	printLog(rlen);
-	// }
-
-	// if(endPositionV(seed) > clen)
-	// {
-	// 	printLog(beginPositionV(seed));
-	// 	printLog(endPositionV(seed));
-	// 	printLog(clen);
-	// }
 
 	return result;
 }
