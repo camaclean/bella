@@ -88,50 +88,235 @@ double slope(double error)
  * @param xDrop
  * @return alignment score and extended seed
  */
-seqAnResult alignSeqAn(const std::string & row, const std::string & col, int rlen, int i, int j, int xDrop, int kmerSize) {
-	// printLog("SeqAn");
+seqAnResult alignSeqAn(const std::string & row, const std::string & col, PairType read_i, PairType read_j, int xDrop, int kmerSize)
+{
 	Score<int, Simple> scoringScheme(1,-1,-1);
 
 	Dna5String seqH(row); 
 	Dna5String seqV(col); 
-	Dna5String seedH;
-	Dna5String seedV;
-	string strand;
-	int longestExtensionTemp;
-	seqAnResult longestExtensionScore;
+	
+	seqAnResult result;
+	TSeed seed(read_i.first, read_j.first, read_i.first + kmerSize, read_j.first + kmerSize);
 
+	int rlen = row.length();
+	int clen = col.length();
+	int tmp;
 
-	TSeed seed(i, j, i + kmerSize, j + kmerSize);
-	seedH = infix(seqH, beginPositionH(seed), endPositionH(seed));
-	seedV = infix(seqV, beginPositionV(seed), endPositionV(seed));
-
-	/* we are reversing the "row", "col" is always on the forward strand */
-	Dna5StringReverseComplement twin(seedH);
-
-	if(twin == seedV)
+	if(beginPositionH(seed) > rlen)
 	{
-		strand = 'c';
-		Dna5StringReverseComplement twinRead(seqH);
-		i = rlen - i - kmerSize;
+		printLog(read_i.first);
+		printLog(beginPositionH(seed));
+		printLog(rlen);
+	}
 
-		setBeginPositionH(seed, i);
-		setBeginPositionV(seed, j);
-		setEndPositionH(seed, i + kmerSize);
-		setEndPositionV(seed, j + kmerSize);
-
-		/* Perform match extension */
-		longestExtensionTemp = extendSeed(seed, twinRead, seqV, EXTEND_BOTH, scoringScheme, xDrop, kmerSize, GappedXDrop());
-
-	} else
+	if(beginPositionV(seed) > clen)
 	{
-		strand = 'n';
-		longestExtensionTemp = extendSeed(seed, seqH, seqV, EXTEND_BOTH, scoringScheme, xDrop,  kmerSize, GappedXDrop());
-	} 
+		printLog(read_j.first);
+		printLog(beginPositionV(seed));
+		printLog(rlen);
+	}
 
-	longestExtensionScore.score = longestExtensionTemp;
-	longestExtensionScore.seed = seed;
-	longestExtensionScore.strand = strand;
-	return longestExtensionScore;
+	// GGGG: reads are on opposite strand
+	// GGGG: for miniasm I need only one option but for combter I might use both?
+	if(read_i.second != read_j.second)
+	{
+		//	* B: >---< | j.E ---> i.B | ~A
+		//	* E: <---> | i.B ---> j.E | ~D
+		if(read_i.second)
+		{
+			/* 1) reverse complement and update pos */
+			Dna5StringReverseComplement twinRead(seqH);
+
+			int i = rlen - read_i.first - kmerSize;
+
+			setBeginPositionH(seed, i);
+			setEndPositionH  (seed, i + kmerSize);
+
+			if(beginPositionH(seed) > rlen)
+			{
+				printLog(read_i.first);
+				printLog(beginPositionH(seed));
+				printLog(rlen);
+			}
+
+			/* 2) align */
+			tmp = extendSeed(seed, twinRead, seqV, EXTEND_BOTH, scoringScheme, xDrop, kmerSize, GappedXDrop());
+
+			/* 3) update best score and extension */
+			updateSeqAn(result, seed, tmp);
+	
+			if(endPositionH(seed) > rlen)
+			{
+				printLog(beginPositionH(seed));
+				printLog(endPositionH(seed));
+				printLog(rlen);
+			}
+
+			/* 4) identify the type of overlap (B|E) */
+			// GGGG: contained read encoded by default - if i don't modify here it's considered contained read
+			// GGGG: so i can avoid some else statement
+			if(beginPositionH(seed) > beginPositionV(seed) && 
+				rlen-endPositionH(seed) < clen-endPositionV(seed))
+			{
+				result.type  = "B";
+				result.suffx = clen-endPositionV(seed);
+
+				if(result.suffx < 0)
+					printLog("err");
+			}
+			else if(beginPositionH(seed) < beginPositionV(seed) &&
+				rlen-endPositionH(seed) > clen-endPositionV(seed))
+			{
+				result.type  = "E";
+				result.suffx = rlen-endPositionH(seed);
+
+				if(result.suffx < 0)
+					printLog("err");
+			}
+		}
+		//	* A: <---> | i.E ---> j.B | ~B
+		//	* D: >---< | j.B ---> i.E | ~E
+		else
+		{
+			/* 1) reverse complement and update pos */
+			Dna5StringReverseComplement twinRead(seqV);
+
+			int j = clen - read_j.first - kmerSize;
+
+			setBeginPositionV(seed, j);
+			setEndPositionV  (seed, j + kmerSize);
+
+			/* 2) align */
+			tmp = extendSeed(seed, seqH, twinRead, EXTEND_BOTH, scoringScheme, xDrop, kmerSize, GappedXDrop());
+
+			/* 3) update best score and extension */
+			updateSeqAn(result, seed, tmp);
+
+			if(endPositionH(seed) > rlen)
+			{
+				printLog(beginPositionH(seed));
+				printLog(endPositionH(seed));
+				printLog(rlen);
+			}
+
+			/* 4) identify the type of overlap (A|D) */
+			// GGGG: contained read encoded by default - if i don't modify here it's considered contained read
+			// GGGG: so i can avoid some else statement
+			if(beginPositionH(seed) > beginPositionV(seed) && 
+				rlen-endPositionH(seed) < clen-endPositionV(seed))
+			{
+				result.type  = "A";
+				result.suffx = clen-endPositionV(seed);
+
+				if(result.suffx < 0)
+					printLog("err");
+			}
+			else if(beginPositionH(seed) < beginPositionV(seed) &&
+				rlen-endPositionH(seed) > clen-endPositionV(seed))
+			{
+				result.type  = "D";
+				result.suffx = rlen-endPositionH(seed);
+
+				if(result.suffx < 0)
+				{
+					printLog("err");
+				}		
+			}
+		}
+	}
+	else
+	{
+		//	* C: >--> | j.E --> i.E | ~F
+		//	* G: >--> | i.E --> j.E | ~H
+		if(!read_i.second)
+		{
+			/* 1) align */
+			tmp = extendSeed(seed, seqH, seqV, EXTEND_BOTH, scoringScheme, xDrop, kmerSize, GappedXDrop());
+
+			/* 3) update best score and extension */
+			updateSeqAn(result, seed, tmp);
+
+			if(endPositionH(seed) > rlen)
+			{
+				printLog(beginPositionH(seed));
+				printLog(endPositionH(seed));
+				printLog(rlen);
+			}
+
+			/* 3) identify the type of overlap (C|G) */
+			// GGGG: contained read encoded by default - if i don't modify here it's considered contained read
+			// GGGG: so i can avoid some else statement
+			if(beginPositionH(seed) > beginPositionV(seed) && 
+				rlen-endPositionH(seed) < clen-endPositionV(seed))
+			{
+				result.type  = "C";
+				result.suffx = clen-endPositionV(seed);
+
+				if(result.suffx < 0)
+					printLog("err");
+			}
+			else if(beginPositionH(seed) < beginPositionV(seed) &&
+				rlen-endPositionH(seed) > clen-endPositionV(seed))
+			{
+				result.type  = "G";
+				result.suffx = rlen-endPositionH(seed);
+
+				if(result.suffx < 0)
+				{
+					printLog("err");
+				}
+					
+			}
+		}
+		//	* F: <--< | i.B --> j.B	| ~C
+		//	* H: <--< | j.B --> i.B	| ~G
+		else
+		{
+			/* 1) align */
+			tmp = extendSeed(seed, seqH, seqV, EXTEND_BOTH, scoringScheme, xDrop, kmerSize, GappedXDrop());
+
+			/* 3) update best score and extension */
+			updateSeqAn(result, seed, tmp);
+
+			/* 3) identify the type of overlap (F|H) */
+			// GGGG: contained read encoded by default - if i don't modify here it's considered contained read
+			// GGGG: so i can avoid some else statement
+			if(beginPositionH(seed) > beginPositionV(seed) && 
+				rlen-endPositionH(seed) < clen-endPositionV(seed))
+			{
+				result.type  = "F";
+				result.suffx = clen-endPositionV(seed);
+
+				if(result.suffx < 0)
+					printLog("err");
+			}
+			else if(beginPositionH(seed) < beginPositionV(seed) &&
+				rlen-endPositionH(seed) > clen-endPositionV(seed))
+			{
+				result.type  = "H";
+				result.suffx = rlen-endPositionH(seed);
+
+				if(result.suffx < 0)
+					printLog("err");
+			}
+		}
+	}
+
+	// if(endPositionH(seed) > rlen)
+	// {
+	// 	printLog(beginPositionH(seed));
+	// 	printLog(endPositionH(seed));
+	// 	printLog(rlen);
+	// }
+
+	// if(endPositionV(seed) > clen)
+	// {
+	// 	printLog(beginPositionV(seed));
+	// 	printLog(endPositionV(seed));
+	// 	printLog(clen);
+	// }
+
+	return result;
 }
 
 //////////////////////////////////////////
@@ -163,11 +348,14 @@ seqAnResult alignSeqAn(const std::string & row, const std::string & col, int rle
  * @param xDrop
  * @return alignment score and extended seed
  */
-xavierResult xavierAlign(const std::string& row, const std::string& col, int rowLen, PairType read_i, PairType read_j, int xDrop, int kmerSize)
+xavierResult xavierAlign(const std::string& row, const std::string& col, PairType read_i, PairType read_j, int xDrop, int kmerSize)
 {
 	// GGGG: result.first = best score, result.second = exit score when (if) x-drop termination is satified
 	std::pair<int, int> tmp;
 	xavierResult result;
+
+	int rlen = row.length();
+	int clen = col.length();
 
 	short match    =  1;
 	short mismatch = -1;
@@ -193,8 +381,8 @@ xavierResult xavierAlign(const std::string& row, const std::string& col, int row
 			std::reverse  (std::begin(read_rc), std::end(read_rc));
 			std::transform(std::begin(read_rc), std::end(read_rc), std::begin(read_rc), complementbase);
 
-			setBeginPositionH(seed, rowLen - read_i.first - kmerSize);
-			setEndPositionH  (seed, rowLen - read_i.first);
+			setBeginPositionH(seed, rlen - read_i.first - kmerSize);
+			setEndPositionH  (seed, rlen - read_i.first);
 
 			/* 2) align */
 			tmp = XavierXDrop(seed, XAVIER_EXTEND_BOTH, read_rc, col, scoringScheme, xDrop);
@@ -206,16 +394,16 @@ xavierResult xavierAlign(const std::string& row, const std::string& col, int row
 			// GGGG: contained read encoded by default - if i don't modify here it's considered contained read
 			// GGGG: so i can avoid some else statement
 			if(getBeginPositionH(seed) > getBeginPositionV(seed) && 
-				getEndPositionH(seed)-row.length() < getEndPositionV(seed)-col.length())
+				rlen-getEndPositionH(seed) < clen-getEndPositionV(seed))
 			{
 				result.type  = "B";
-				result.suffx = getEndPositionV(seed)-col.length();
+				result.suffx = clen-getEndPositionV(seed);
 			}
 			else if(getBeginPositionH(seed) < getBeginPositionV(seed) &&
-				getEndPositionH(seed)-row.length() > getEndPositionV(seed)-col.length())
+				rlen-getEndPositionH(seed) > clen-getEndPositionV(seed))
 			{
 				result.type  = "E";
-				result.suffx = getEndPositionH(seed)-row.length();
+				result.suffx = rlen-getEndPositionH(seed);
 			}
 		}
 		//	* A: <---> | i.E ---> j.B | ~B
@@ -228,8 +416,8 @@ xavierResult xavierAlign(const std::string& row, const std::string& col, int row
 			std::reverse  (std::begin(read_rc), std::end(read_rc));
 			std::transform(std::begin(read_rc), std::end(read_rc), std::begin(read_rc), complementbase);
 
-			setBeginPositionV(seed, rowLen - read_j.first - kmerSize);
-			setEndPositionV  (seed, rowLen - read_j.first);
+			setBeginPositionV(seed, clen - read_j.first - kmerSize);
+			setEndPositionV  (seed, clen - read_j.first);
 
 			/* 2) align */
 			tmp = XavierXDrop(seed, XAVIER_EXTEND_BOTH, row, read_rc, scoringScheme, xDrop);
@@ -241,16 +429,16 @@ xavierResult xavierAlign(const std::string& row, const std::string& col, int row
 			// GGGG: contained read encoded by default - if i don't modify here it's considered contained read
 			// GGGG: so i can avoid some else statement
 			if(getBeginPositionH(seed) > getBeginPositionV(seed) && 
-				getEndPositionH(seed)-row.length() < getEndPositionV(seed)-col.length())
+				rlen-getEndPositionH(seed) < clen-getEndPositionV(seed))
 			{
 				result.type  = "A";
-				result.suffx = getEndPositionV(seed)-col.length();
+				result.suffx = clen-getEndPositionV(seed);
 			}
 			else if(getBeginPositionH(seed) < getBeginPositionV(seed) &&
-				getEndPositionH(seed)-row.length() > getEndPositionV(seed)-col.length())
+				rlen-getEndPositionH(seed) > clen-getEndPositionV(seed))
 			{
 				result.type  = "D";
-				result.suffx = getEndPositionH(seed)-row.length();
+				result.suffx = rlen-getEndPositionH(seed);
 			}
 		}
 	}
@@ -270,16 +458,16 @@ xavierResult xavierAlign(const std::string& row, const std::string& col, int row
 			// GGGG: contained read encoded by default - if i don't modify here it's considered contained read
 			// GGGG: so i can avoid some else statement
 			if(getBeginPositionH(seed) > getBeginPositionV(seed) && 
-				getEndPositionH(seed)-row.length() < getEndPositionV(seed)-col.length())
+				rlen-getEndPositionH(seed) < clen-getEndPositionV(seed))
 			{
 				result.type  = "C";
-				result.suffx = getEndPositionV(seed)-col.length();
+				result.suffx = clen-getEndPositionV(seed);
 			}
 			else if(getBeginPositionH(seed) < getBeginPositionV(seed) &&
-				getEndPositionH(seed)-row.length() > getEndPositionV(seed)-col.length())
+				rlen-getEndPositionH(seed) > clen-getEndPositionV(seed))
 			{
 				result.type  = "G";
-				result.suffx = getEndPositionH(seed)-row.length();
+				result.suffx = rlen-getEndPositionH(seed);
 			}
 		}
 		//	* F: <--< | i.B --> j.B	| ~C
@@ -296,16 +484,16 @@ xavierResult xavierAlign(const std::string& row, const std::string& col, int row
 			// GGGG: contained read encoded by default - if i don't modify here it's considered contained read
 			// GGGG: so i can avoid some else statement
 			if(getBeginPositionH(seed) > getBeginPositionV(seed) && 
-				getEndPositionH(seed)-row.length() < getEndPositionV(seed)-col.length())
+				rlen-getEndPositionH(seed) < clen-getEndPositionV(seed))
 			{
 				result.type  = "F";
-				result.suffx = getEndPositionV(seed)-col.length();
+				result.suffx = clen-getEndPositionV(seed);
 			}
 			else if(getBeginPositionH(seed) < getBeginPositionV(seed) &&
-				getEndPositionH(seed)-row.length() > getEndPositionV(seed)-col.length())
+				rlen-getEndPositionH(seed) > clen-getEndPositionV(seed))
 			{
 				result.type  = "H";
-				result.suffx = getEndPositionH(seed)-row.length();
+				result.suffx = rlen-getEndPositionH(seed);
 			}
 		}
 	}

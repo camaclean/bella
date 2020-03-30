@@ -56,9 +56,9 @@ typedef SeedSet<TSeed> TSeedSet;
 //#define LINUX
 //#define RAM
 
-#ifndef __SIMD__
-#define __SIMD__
-#endif
+// #ifndef __SIMD__
+// #define __SIMD__
+// #endif
 
 #ifdef OSX
 #include <mach/mach.h>
@@ -451,6 +451,7 @@ void PostAlignDecision(const seqAnResult& maxExtScore,
 
 	if(passed)
 	{
+
 		if(!b_pars.outputPaf) 
 		{
 			//	* B: >---< | j.E ---> i.B | ~A
@@ -615,11 +616,10 @@ auto RunPairWiseAlignments(IT start, IT end, IT offset, IT * colptrC, IT * rowid
 
 				//	GG: nucleotide alignment
 			#ifdef __SIMD__
-				maxExtScore = xavierAlign(seq1, seq2, seq1len, kmer.first, kmer.second, b_pars.xDrop, b_pars.kmerSize);
+				maxExtScore = xavierAlign(seq1, seq2, kmer.first, kmer.second, b_pars.xDrop, b_pars.kmerSize);
 			#else
-				maxExtScore = alignSeqAn(seq1, seq2, seq1len, i, j, b_pars.xDrop, b_pars.kmerSize);
+				maxExtScore = alignSeqAn(seq1, seq2, kmer.first, kmer.second, b_pars.xDrop, b_pars.kmerSize);
 			#endif
-
 				PostAlignDecision(maxExtScore, reads[rid], reads[cid], b_pars, ratiophi, val->count, vss[ithread], 
 					outputted, numBasesAlignedTrue, numBasesAlignedFalse, passed, matches);
 			#ifdef __SIMD__

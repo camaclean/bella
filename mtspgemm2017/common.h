@@ -77,7 +77,7 @@ struct BELLApars
 	double	minProbability;		// reliable range probability threshold 				(r)
 	double	minpNMC;			// nested markov chain probability threshold 		    (n)
 
-	BELLApars(): kmerSize(17), binSize(500), minOverlap(2000), fixedThreshold(-1), upperNMC(5), xDrop(7), numGPU(1),
+	BELLApars(): kmerSize(17), binSize(500), minOverlap(2000), fixedThreshold(-1), upperNMC(5), xDrop(50), numGPU(1),
 					skipEstimate(true), skipAlignment(false), outputPaf(false), userDefMem(false), deltaChernoff(0.10), 
 						totalMemory(8000.0), errorRate(0.00), minProbability(0.10), minpNMC(0.90) {};
 };
@@ -102,9 +102,12 @@ struct xavierResult {
 
 typedef seqan::Seed<seqan::Simple> TSeed;
 struct seqAnResult {
-	int score;
-	std::string strand;
-	TSeed seed;
+    int score;
+    TSeed seed;
+
+	// GGGG: encode contained read by default
+	int suffx = 0;
+    std::string type = "-"; 
 };
 
 struct readType_ {
@@ -273,6 +276,12 @@ void updateAlign(xavierResult& result, SeedX& seed, int bestScore)
 
 	setEndPositionH  (result.seed, getEndPositionH(seed));	
 	setEndPositionV  (result.seed, getEndPositionV(seed));	
+}
+
+void updateSeqAn(seqAnResult& result, TSeed& seed, int bestScore)
+{
+	result.score = bestScore;
+	result.seed  = seed;
 }
 
 #endif
