@@ -7,7 +7,7 @@
 #include <seqan/modifier.h>
 #include <seqan/seeds.h>
 #ifndef __NVCC__
-	#include "../xavier/xavier.h"
+	#include "xavier.h"
 #endif
 
 #ifndef PRINT
@@ -74,7 +74,7 @@ template <typename T>
 struct xavierResult {
     int score;
     std::string strand;
-    SeedX seed;
+    xavier::Seed seed;
 };
 
 #endif

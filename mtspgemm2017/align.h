@@ -8,7 +8,7 @@
 #include <seqan/seeds.h>
 #include "common.h"
 #ifndef __NVCC__
-	#include "../xavier/xavier.h"
+	#include "xavier.h"
 #endif
 #include <omp.h>
 #include <fstream>
@@ -148,7 +148,7 @@ seqAnResult alignSeqAn(const std::string & row, const std::string & col, int rle
 xavierResult xavierAlign(const std::string& row, const std::string& col, int rowLen, int i, int j, int xDrop, int kmerSize)
 {
 	// result.first = best score, result.second = exit score when (if) x-drop termination is satified
-	std::pair<int, int> tmp;
+	xavier::AlignmentResult tmp;
 	xavierResult result;
 
 	// penalties (LOGAN currently supports only linear gap penalty and penalty within +/- 3)
@@ -157,12 +157,12 @@ xavierResult xavierAlign(const std::string& row, const std::string& col, int row
 	short gap 	   = -1;
 
 	// initialize scoring scheme
-	ScoringSchemeX scoringScheme(match, mismatch, gap);	// enalties (LOGAN currently supports only linear gap penalty and penalty within +/- 3)
+	xavier::ScoringScheme scoringScheme(match, mismatch, gap);	// enalties (LOGAN currently supports only linear gap penalty and penalty within +/- 3)
 
-	SeedX seed(i, j, kmerSize);
+	xavier::Seed seed(i, j, kmerSize);
 
-	std::string seedH = row.substr(getBeginPositionH(seed), kmerSize);
-	std::string seedV = col.substr(getBeginPositionV(seed), kmerSize);
+	std::string seedH = row.substr(seed.getBegH(), kmerSize);
+	std::string seedV = col.substr(seed.getBegV(), kmerSize);
 
 	std::string rep = reversecomplement(seedH);
 	std::string cpyrow(row);
@@ -172,27 +172,27 @@ xavierResult xavierAlign(const std::string& row, const std::string& col, int row
 		std::reverse(std::begin(cpyrow), std::end(cpyrow));
 		std::transform(std::begin(cpyrow), std::end(cpyrow), std::begin(cpyrow), complementbase);
 
-		setBeginPositionH(seed, rowLen - i - kmerSize);
-		setEndPositionH(seed, rowLen - i);
+		seed.setBegH(rowLen - i - kmerSize);
+		seed.setEndH(rowLen - i);
 
 		// perform match extension reverse string
- 		tmp = XavierXDrop(seed, XAVIER_EXTEND_BOTH, cpyrow, col, scoringScheme, xDrop);
+ 		tmp = seed_and_extend(cpyrow, col, scoringScheme, xDrop, seed);
 		result.strand = "c";
 	}
 	else
 	{
 		// perform match extension forward string
-	 	tmp = XavierXDrop(seed, XAVIER_EXTEND_BOTH, row, col, scoringScheme, xDrop);
+	 	tmp = seed_and_extend(row, col, scoringScheme, xDrop, seed);
 		result.strand = "n";
 	}
 
-	result.score = tmp.first; 	// best score
+	result.score = tmp.bestScore; // best score
 
-	setBeginPositionH(result.seed, getBeginPositionH(seed));	// updated extension
-	setBeginPositionV(result.seed, getBeginPositionV(seed));	// updated extension
+	result.seed.setBegH(seed.getBegH()); // updated extension
+	result.seed.setBegV(seed.getBegV()); // updated extension
 
-	setEndPositionH(result.seed, getEndPositionH(seed));		// updated extension
-	setEndPositionV(result.seed, getEndPositionV(seed));		// updated extension
+	result.seed.setEndH(seed.getEndH()); // updated extension
+	result.seed.setEndV(seed.getEndV()); // updated extension
 
 	return result;
 }

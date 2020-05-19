@@ -9,7 +9,7 @@
 #include "../kmercode/ParallelFASTQ.h"
 #include "../libcuckoo/cuckoohash_map.hh"
 #ifndef __NVCC__
-	#include "../xavier/xavier.h"
+	#include "xavier.h"
 #endif
 #include <seqan/sequence.h>
 #include <seqan/align.h>
@@ -408,10 +408,10 @@ void PostAlignDecision(const seqAnResult& maxExtScore,
 	// {begin/end}Position{V/H}: Returns the begin/end position of the seed in the query (vertical/horizonral direction)
 	// these four return seqan:Tposition objects
 #ifdef __SIMD__
-	int begpV = getBeginPositionV(maxseed);
-	int endpV = getEndPositionV(maxseed);
-	int begpH = getBeginPositionH(maxseed);
-	int endpH = getEndPositionH(maxseed);
+	int begpV = maxseed.getBegV();
+	int endpV = maxseed.getEndV();
+	int begpH = maxseed.getBegH();
+	int endpH = maxseed.getEndH();
 #else
 	int begpV = beginPositionV(maxseed);
 	int endpV = endPositionV(maxseed);
@@ -554,7 +554,7 @@ auto RunPairWiseAlignments(IT start, IT end, IT offset, IT * colptrC, IT * rowid
 				PostAlignDecision(maxExtScore, reads[rid], reads[cid], b_pars, ratiophi, val->count, vss[ithread], 
 					outputted, numBasesAlignedTrue, numBasesAlignedFalse, passed, matches);
 			#ifdef __SIMD__
-				numBasesAlignedThread += getEndPositionV(maxExtScore.seed)-getBeginPositionV(maxExtScore.seed);
+				numBasesAlignedThread += maxExtScore.seed.getEndV() - maxExtScore.seed.getBegV();
 			#else
 				numBasesAlignedThread += endPositionV(maxExtScore.seed)-beginPositionV(maxExtScore.seed);
 			#endif
@@ -896,8 +896,8 @@ RunPairWiseAlignmentsGPU(IT start, IT end, IT offset, IT * colptrC, IT * rowids,
 				std::string strand = "n";
 				SeedL seed(i, j, i + b_pars.kmerSize, j + b_pars.kmerSize);
 
-				std::string seedH = seq1.substr(getBeginPositionH(seed), b_pars.kmerSize);
-				std::string seedV = seq2.substr(getBeginPositionV(seed), b_pars.kmerSize);
+				std::string seedH = seq1.substr(seed.getBegH(), b_pars.kmerSize);
+				std::string seedV = seq2.substr(seed.getBegV(), b_pars.kmerSize);
 
 				std::string seedHcpy = reversecomplement(seedH);
 				std::string cpyseq1(seq1);
