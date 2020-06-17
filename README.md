@@ -1,8 +1,8 @@
 # BELLA - Berkeley Efficient Long-Read to Long-Read Aligner and Overlapper
-<p align="justify">
+
 BELLA is a computationally efficient and highly accurate long-read to long-read aligner and overlapper. BELLA uses a k-mer based approach to detect overlaps between noisy, long reads. We demonstrated the feasibility of the k-mer based approach through a mathematical model based on Markov chains. BELLA provides a novel algorithm for pruning k-mers that are unlikely to be useful in overlap detection and whose presence would only incur unnecessary computational costs. Our reliable k-mers detection algorithm explicitly maximizes the probability of retaining k-mers that belong to unique regions of the genome.
-BELLA achieves fast overlapping without sketching using sparse matrix-matrix multiplication (SpGEMM), implemented utilizing high-performance software and libraries developed for this sparse matrix subroutine. Any novel sparse matrix format and multiplication algorithm would be applicable to overlap detection and enable continued performance improvements. We coupled BELLA's overlap detection with our newly developed vectorized seed-and-extend banded-alignment algorithm.
-The choice of the optimal k-mer seed occurs through our binning mechanism, where k-mer positions within a read pair are used to estimate the length of the overlap and to "bin" k-mers to form a consensus.We developed and implemented a new method to separate true alignments from false positives depending on the alignment score. This method demonstrates that the probability of false positives decreases exponentially as the overlap length between sequences increases. </p>
+BELLA achieves fast overlapping without sketching using sparse matrix-matrix multiplication (SpGEMM), implemented utilizing high-performance software and libraries developed for this sparse matrix subroutine. Any novel sparse matrix format and multiplication algorithm would be applicable to overlap detection and enable continued performance improvements. We coupled BELLA's overlap detection with [our newly developed vectorized seed-and-extend banded-alignment algorithm](https://github.com/giuliaguidi/xavier).
+The choice of the optimal k-mer seed occurs through our binning mechanism, where k-mer positions within a read pair are used to estimate the length of the overlap and to "bin" k-mers to form a consensus.We developed and implemented a new method to separate true alignments from false positives depending on the alignment score. This method demonstrates that the probability of false positives decreases exponentially as the overlap length between sequences increases.
 
 ## Content
 
@@ -71,15 +71,15 @@ Optional flag description:
 -x : SeqAn xDrop [7]   									 
 -e : Error rate [0.15]   				 
 -q : Estimare error rate from the dataset [FALSE]   	 
--u : Use default error rate setting [FALSE]  		 
--b : Discard pairs with less than <MarkovThreshold> shared k-mers [FALSE]     	 
+-u : Use default error rate setting [FALSE]  		   	 
 -m : Total RAM of the system in MB [auto estimated if possible or 8,000 if not]  	 
 -z : Do not run pairwise alignment [FALSE]   			 
 -d : Deviation from the mean alignment score [0.10]  	 
 -w : Bin size binning algorithm [500]   	 
 -p : Output in PAF format [FALSE]   		 
 -r : Probability threshold for reliable range [0.002]     
--g : GPUs available [1, only works when BELLA is compiled for GPU] 	 
+-g : GPUs available [1, only works when BELLA is compiled for GPU] 
+-s : K-mer counting split count can be increased for large dataset [1]	 
 ```
 ### Error Rate
 

@@ -540,21 +540,6 @@ auto RunPairWiseAlignments(IT start, IT end, IT offset, IT * colptrC, IT * rowid
 				//	GG: number of matching kmer into the majority voted bin
 				unsigned short int matches = val->chain();
 				unsigned short int overlap;
-				unsigned short int minkmer;
-				
-				if(b_pars.myMarkovOverlap != -1) 
-				{
-					overlap = val->overlaplength();
-					minkmer = std::floor((float)overlap/(float)b_pars.myMarkovOverlap);
-				}
-				else 
-				{
-					minkmer = 1;
-				}
-
-				//	GG: b_pars.minSurvivedKmers should be function of Markov chain
-				if (matches < minkmer)
-					continue;
 
 				pair<int, int> kmer = val->choose();
 				int i = kmer.first, j = kmer.second;
@@ -576,9 +561,16 @@ auto RunPairWiseAlignments(IT start, IT end, IT offset, IT * colptrC, IT * rowid
 			}
 			else // if skipAlignment == false do alignment, else save just some info on the pair to file
 			{
-				vss[ithread] << reads[cid].nametag << '\t' << reads[rid].nametag << '\t' << val->count << '\t' << 
-						seq2len << '\t' << seq1len << std::endl;
+				pair<int, int> kmer = val->choose();
+				int i = kmer.first, j = kmer.second;
+
+				int overlap = overlapop(reads[rid].seq, reads[cid].seq, i, j, b_pars.kmerSize);
+				vss[ithread] << reads[cid].nametag << '\t' << reads[rid].nametag << '\t' << val->count << '\t' <<
+						overlap << '\t' << seq2len << '\t' << seq1len << endl;
 				++outputted;
+				// vss[ithread] << reads[cid].nametag << '\t' << reads[rid].nametag << '\t' << val->count << '\t' << 
+				// 		seq2len << '\t' << seq1len << std::endl;
+				// ++outputted;
 			}
 		} // all nonzeros in that column of A^T A
 	#pragma omp critical
@@ -897,11 +889,6 @@ RunPairWiseAlignmentsGPU(IT start, IT end, IT offset, IT * colptrC, IT * rowids,
 
 				//	GG: number of matching kmer into the majority voted bin
 				unsigned short int matches = val->chain();
-				unsigned short int minkmer = 1;
-
-				//	GG: b_pars.minSurvivedKmers should be function of Markov chain
-				if (matches < minkmer)
-					continue;
 
 				pair<int, int> kmer = val->choose();
 				int i = kmer.first, j = kmer.second;
@@ -938,10 +925,14 @@ RunPairWiseAlignmentsGPU(IT start, IT end, IT offset, IT * colptrC, IT * rowids,
 			}
 			else // if skipAlignment == false do alignment, else save just some info on the pair to file
 			{
+				pair<int, int> kmer = val->choose();
+				int i = kmer.first, j = kmer.second;
+
+				int overlap = overlapop(reads[rid].seq, reads[cid].seq, i, j, b_pars.kmerSize);
 				// vss[ithread] << reads[cid].nametag << '\t' << reads[rid].nametag << '\t' << val->count << '\t' << 
 				// 		seq2len << '\t' << seq1len << endl;
-				ss << reads[cid].nametag << '\t' << reads[rid].nametag << '\t' << val->count << '\t' << 
-						seq2len << '\t' << seq1len << endl;
+				ss << reads[cid].nametag << '\t' << reads[rid].nametag << '\t' << val->count << '\t' <<
+						overlap << '\t' << seq2len << '\t' << seq1len << endl;
 				++outputted;
 			}
 		}

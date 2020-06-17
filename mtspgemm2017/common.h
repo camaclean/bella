@@ -49,7 +49,7 @@ struct BELLApars
 	short int		        fixedThreshold;		// Default alignment score threshold 	(a)
 	unsigned short int		xDrop;				// SeqAn xDrop value 					(x)
 	unsigned short int		numGPU;				// Number GPUs available/to be used  	(g)
-	short int		        myMarkovOverlap;	// Overlap length to see 1 shared k-mer (b)
+	unsigned short int		SplitCount;			// Number of splits counting k-mers  	(s)
 	bool	skipEstimate;		// Do not estimate error but use user-defined error 	(e)
 	bool	skipAlignment;		// Do not align 										(z)
 	bool	outputPaf;			// Output in paf format 								(p)
@@ -59,9 +59,9 @@ struct BELLApars
 	double	errorRate;			// default error rate if estimation is disable 			(e)
 	double	minProbability;		// reliable range probability threshold 				(r)
 
-	BELLApars(): kmerSize(17), binSize(500), fixedThreshold(-1), xDrop(7), numGPU(1), 
-					myMarkovOverlap(-1), skipEstimate(true), skipAlignment(false), outputPaf(false), userDefMem(false),
-						deltaChernoff(0.10), totalMemory(8000.0), errorRate(0.00), minProbability(0.10) {};
+	BELLApars(): kmerSize(17), binSize(500), fixedThreshold(-1), xDrop(7), numGPU(1), SplitCount(1),
+					skipEstimate(true), skipAlignment(false), outputPaf(false), userDefMem(false), deltaChernoff(0.10), 
+						totalMemory(8000.0), errorRate(0.00), minProbability(0.10) {};
 };
 
 template <typename T>
@@ -78,14 +78,6 @@ struct xavierResult {
 };
 
 #endif
-
-//struct loganResult {
-  //  int score;
-  //  std::string strand;
-  //  SeedL seed;
-//};
-
-//#endif
 
 typedef seqan::Seed<seqan::Simple> TSeed;
 struct seqAnResult {
