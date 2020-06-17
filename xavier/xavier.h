@@ -1,5 +1,5 @@
 //===========================================================================
-// Title:  Xavier: High-Performance X-Drop Adaptive Banded Pairwise Alignment 
+// Title:  Xavier: High-Performance X-Drop Adaptive Banded Pairwise Alignment
 // Author: G. Guidi, E. Younis
 // Date:   29 April 2019
 //===========================================================================
@@ -16,6 +16,17 @@
 #include<iterator>
 #include<x86intrin.h>
 #include"simdutils.h"
+
+
+vectorUnionType left_shift(const vectorType& v)
+{
+	signed char tmp[33];
+	_mm256_storeu_si256((__m256i*) &tmp[0], v);
+	vectorUnionType ret;
+	ret.simd = _mm256_lddqu_si256((__m256i*) &tmp[1]);
+	return ret;
+}
+
 
 void
 XavierPhase1(XavierState& state)
@@ -52,10 +63,10 @@ XavierPhase1(XavierState& state)
 			twoF += state.get_gap_cost();
 
 			DPmatrix[i][j] = std::max(oneF, twoF);
-		
+
 			// Heuristic to keep track of the max in phase1
 			if(DPmatrix[i][j] > DPmax)
-				DPmax = DPmatrix[i][j];			
+				DPmax = DPmatrix[i][j];
 		}
 	}
 
@@ -85,6 +96,35 @@ XavierPhase1(XavierState& state)
 
 	state.update_antiDiag1(LOGICALWIDTH, NINF);
 	state.update_antiDiag2(0, NINF);
+	printf("antidiag1\n");
+	printVectorD(state.antiDiag1.simd);
+	printf("antidiag2\n");
+	printVectorD(state.antiDiag2.simd);
+	//state.antiDiag1 = shiftLeft(state.antiDiag1.simd);
+	/*
+	{
+		auto a = state.antiDiag1;
+		auto start = std::chrono::system_clock::now();
+		for (size_t i = 0; i < 100000000000; ++i);
+			a = shiftLeft(a.simd);
+		auto end = std::chrono::system_clock::now();
+		std::chrono::duration<double> sec = end-start;
+		std::cout << "Microseconds: " << std::chrono::duration_cast<std::chrono::microseconds>(sec).count() << std::endl;
+	}
+	{
+		auto a = state.antiDiag1;
+		auto start = std::chrono::system_clock::now();
+		for (size_t i = 0; i < 100000000000; ++i);
+			a = left_shift(a.simd);
+		auto end = std::chrono::system_clock::now();
+		std::chrono::duration<double> sec = end-start;
+		std::cout << "Microseconds: " << std::chrono::duration_cast<std::chrono::microseconds>(sec).count() << std::endl;
+	}
+	*/
+	//auto b = shiftLeft(state.antiDiag2.simd);
+	//printVectorD(a.simd);
+	//printVectorD(b.simd);
+
 	state.broadcast_antiDiag3(NINF);
 
 	state.set_best_score(DPmax);
@@ -106,16 +146,26 @@ void
 XavierPhase2(XavierState& state)
 {
 	myLog("Phase2");
+	int count = 0;
 	while(state.hoffset < state.hlength && state.voffset < state.vlength)
 	{
+		printf("-------- %03d --------\n",count++);
+		printVectorC(state.get_vqueryh());
+		printVectorC(state.get_vqueryv());
+		printVectorD(state.get_antiDiag1());
+		printVectorD(state.get_antiDiag2());
 		// antiDiag1F (final)
 		// NOTE: -1 for a match and 0 for a mismatch
 		vectorType match = cmpeqOp(state.get_vqueryh(), state.get_vqueryv());
 		match = blendvOp(state.get_vmismatchCost(), state.get_vmatchCost(), match);
+		printVectorD(match);
 		vectorType antiDiag1F = addOp(match, state.get_antiDiag1());
+		printVectorD(antiDiag1F);
 
 		// antiDiag2S (shift)
 		vectorUnionType antiDiag2S = shiftLeft(state.get_antiDiag2());
+		printf("tmp: ");
+		printVectorD(antiDiag2S.simd);
 
 		// antiDiag2M (pairwise max)
 		vectorType antiDiag2M = maxOp(antiDiag2S.simd, state.get_antiDiag2());
@@ -139,13 +189,13 @@ XavierPhase2(XavierState& state)
 		if (state.get_curr_score() < scoreThreshold)
 		{
 			state.xDropCond = true;
-			
+
 			setBeginPositionH(state.seed, 0);
 			setBeginPositionV(state.seed, 0);
 
 			setEndPositionH(state.seed, state.hoffset);
 			setEndPositionV(state.seed, state.voffset);
-			
+
 			return; // GG: it's a void function and the values are saved in XavierState object
 		}
 
@@ -175,10 +225,17 @@ XavierPhase2(XavierState& state)
 		setEndPositionH(state.seed, state.hoffset);
 		setEndPositionV(state.seed, state.voffset);
 
-		if (maxpos > MIDDLE)
+		if (maxpos > MIDDLE) {
+			printf("moving right %d\n", maxpos);
 			state.moveRight();
+		}
 		else
+		{
+			printf("moving down %d\n", maxpos);
 			state.moveDown();
+		}
+		printVectorD(state.get_antiDiag1());
+		printVectorD(state.get_antiDiag2());
 	}
 }
 
@@ -256,6 +313,8 @@ XavierPhase4(XavierState& state)
 
 void
 XavierOneDirection (XavierState& state) {
+	printf("queryh: %s\n", state.queryh);
+	printf("queryv: %s\n", state.queryv);
 
 	// PHASE 1 (initial values load using dynamic programming)
 	XavierPhase1(state);
@@ -297,7 +356,7 @@ XavierXDrop
 
 		XavierState result (_seed, targetPrefix, queryPrefix, scoringScheme, scoreDropOff);
 
-		if (targetPrefix.length() >= VECTORWIDTH || queryPrefix.length() >= VECTORWIDTH) 
+		if (targetPrefix.length() >= VECTORWIDTH || queryPrefix.length() >= VECTORWIDTH)
 			XavierOneDirection (result);
 
 		setBeginPositionH(seed, getEndPositionH(seed) - getEndPositionH(result.seed));
@@ -314,7 +373,7 @@ XavierXDrop
 
 		XavierState result (_seed, targetSuffix, querySuffix, scoringScheme, scoreDropOff);
 
-		if (targetSuffix.length() >= VECTORWIDTH || querySuffix.length() >= VECTORWIDTH) 
+		if (targetSuffix.length() >= VECTORWIDTH || querySuffix.length() >= VECTORWIDTH)
 			XavierOneDirection (result);
 
 		setEndPositionH (seed, getBeginPositionH(seed) + getEndPositionH(result.seed));
@@ -333,9 +392,12 @@ XavierXDrop
 		std::reverse (targetPrefix.begin(), targetPrefix.end());
 		std::reverse (queryPrefix.begin(),  queryPrefix.end());
 
+		std::cout << targetPrefix << std::endl << std::endl;
+		std::cout << queryPrefix << std::endl;
+
 		XavierState result1(_seed1, targetPrefix, queryPrefix, scoringScheme, scoreDropOff);
 
-		if (targetPrefix.length() < VECTORWIDTH || queryPrefix.length() < VECTORWIDTH) 
+		if (targetPrefix.length() < VECTORWIDTH || queryPrefix.length() < VECTORWIDTH)
 		{
 			setBeginPositionH (seed, getEndPositionH(seed) - targetPrefix.length());
 			setBeginPositionV (seed, getEndPositionV(seed) - queryPrefix.length());
@@ -347,21 +409,26 @@ XavierXDrop
 			setBeginPositionH (seed, getEndPositionH(seed) - getEndPositionH(result1.seed));
 			setBeginPositionV (seed, getEndPositionV(seed) - getEndPositionV(result1.seed));
 		}
+		std::cout << "here" << std::endl;
 
 		std::string targetSuffix = target.substr (getEndPositionH(seed), target.length()); 	// from end seed until the end (seed included)
 		std::string querySuffix  = query.substr  (getEndPositionV(seed), query.length());	// from end seed until the end (seed included)
 
+		std::cout << targetSuffix << std::endl << std::endl;
+		std::cout << querySuffix << std::endl;
+
 		XavierState result2(_seed2, targetSuffix, querySuffix, scoringScheme, scoreDropOff);
 
-		if (targetSuffix.length() < VECTORWIDTH || querySuffix.length() < VECTORWIDTH) 
+		if (targetSuffix.length() < VECTORWIDTH || querySuffix.length() < VECTORWIDTH)
 		{
+			std::cout << "here2" << std::endl;
 			setBeginPositionH (seed, getEndPositionH(seed) + targetSuffix.length());
 			setBeginPositionV (seed, getEndPositionV(seed) + querySuffix.length());
 		}
 		else
 		{
 			XavierOneDirection (result2);
-			
+
 			setEndPositionH (seed, getEndPositionH(seed) + getEndPositionH(result2.seed));
 			setEndPositionV (seed, getEndPositionV(seed) + getEndPositionV(result2.seed));
 		}

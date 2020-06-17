@@ -1,5 +1,5 @@
 //===========================================================================
-// Title:  Xavier: High-Performance X-Drop Adaptive Banded Pairwise Alignment 
+// Title:  Xavier: High-Performance X-Drop Adaptive Banded Pairwise Alignment
 // Author: G. Guidi, E. Younis
 // Date:   30 April 2019
 //===========================================================================
@@ -203,8 +203,8 @@ public:
 		vgapCost      = setOp (gapCost     );
 		vzeros        = _mm256_setzero_si256();
 
-		hoffset = LOGICALWIDTH;
-		voffset = LOGICALWIDTH;
+		hoffset = LOGICALWIDTH+1;
+		voffset = LOGICALWIDTH+1;
 
 		bestScore    = 0;
 		currScore    = 0;
@@ -277,9 +277,9 @@ public:
 	{
 		// (a) shift to the right on query vertical
 		vqueryv = shiftRight(vqueryv.simd);
-		// ==50054==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x60600062b0e0 at pc 
+		// ==50054==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x60600062b0e0 at pc
 		// 0x0001019b50f1 bp 0x70000678ba30 sp 0x70000678ba28 READ of size 1 at 0x60600062b0e0 thread T6
-		vqueryv.elem[0] = queryv[voffset++]; 
+		vqueryv.elem[0] = queryv[voffset++];
 
 		// (b) shift to the right on updated vector 2
 		// this places the left-aligned vector 3 as a right-aligned vector 2
